@@ -149,7 +149,7 @@ func (h *AIHandler) callAnthropicAPI(positions []Position, prices []PricePoint) 
 					"properties": map[string]interface{}{
 						"commodity_code": map[string]interface{}{
 							"type":        "string",
-							"description": "The commodity code (e.g., CORN, WHEAT, SOYBEAN_OIL)",
+							"description": "The commodity code (e.g., CORN)",
 						},
 						"condition": map[string]interface{}{
 							"type":        "string",

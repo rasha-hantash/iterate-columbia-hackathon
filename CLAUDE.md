@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Commodity price alert microservice — a Go backend with PostgreSQL for managing price alerts on agricultural commodities (CORN, WHEAT, SOYBEAN_OIL). Multi-tenant via client-based isolation; authentication via `X-User-ID` header.
+Commodity price alert microservice — a Go backend with PostgreSQL for managing price alerts on agricultural commodities (CORN). Multi-tenant via client-based isolation; authentication via `X-User-ID` header.
 
 ## Commands
 

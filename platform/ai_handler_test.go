@@ -20,7 +20,7 @@ func TestParseAnthropicResponse_TextAndToolUse(t *testing.T) {
 			{
 				Type:  "tool_use",
 				Name:  "create_alert",
-				Input: json.RawMessage(`{"commodity_code":"WHEAT","condition":"above","threshold_price":6.50,"notes":"Take-profit for wheat"}`),
+				Input: json.RawMessage(`{"commodity_code":"CORN","condition":"above","threshold_price":42.00,"notes":"Take-profit for corn short"}`),
 			},
 		},
 	}
@@ -51,8 +51,8 @@ func TestParseAnthropicResponse_TextAndToolUse(t *testing.T) {
 		t.Errorf("expected 'Stop-loss for corn', got %q", result.Suggestions[0].Notes)
 	}
 
-	if result.Suggestions[1].CommodityCode != "WHEAT" {
-		t.Errorf("expected WHEAT, got %q", result.Suggestions[1].CommodityCode)
+	if result.Suggestions[1].CommodityCode != "CORN" {
+		t.Errorf("expected CORN, got %q", result.Suggestions[1].CommodityCode)
 	}
 	if result.Suggestions[1].Condition != "above" {
 		t.Errorf("expected above, got %q", result.Suggestions[1].Condition)

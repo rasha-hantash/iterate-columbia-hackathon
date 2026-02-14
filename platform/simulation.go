@@ -117,6 +117,11 @@ func (sm *SimulationManager) HandleStartSimulation(w http.ResponseWriter, r *htt
 		}
 	}
 
+	// Import 2024 CSV on demand if not already loaded
+	if err := import2024MarketData(sm.db); err != nil {
+		log.Printf("[Simulation] Warning: could not import 2024 CSV: %v", err)
+	}
+
 	// Load 2024 data from market_data table
 	groups, totalRows, err := sm.load2024Data()
 	if err != nil {
@@ -126,7 +131,7 @@ func (sm *SimulationManager) HandleStartSimulation(w http.ResponseWriter, r *htt
 	}
 	if len(groups) == 0 {
 		sm.mu.Unlock()
-		respondError(w, http.StatusNotFound, "No 2024 market data found. Ensure CSV data has been imported.")
+		respondError(w, http.StatusNotFound, "No 2024 market data found. Ensure the 2024 CSV file is in the project root.")
 		return
 	}
 

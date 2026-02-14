@@ -1,6 +1,6 @@
 # Commodity Alert Manager
 
-A commodity price alert microservice with AI-powered position analysis and real-time risk monitoring. Go backend with PostgreSQL, React frontend with Tailwind CSS.
+A toy version of [Edge](https://try-edge.com) — a price alert microservice for agricultural commodity risk managers, with AI-powered position analysis and real-time risk monitoring. Go backend with PostgreSQL, React frontend with Tailwind CSS.
 
 ## Quick Start
 
@@ -38,12 +38,13 @@ WHITECIRCLE_DEPLOYMENT_ID=your-deployment-uuid
 source .env && cd platform && go run .
 ```
 
-Server starts on http://localhost:8000. On first startup, both 2023 and 2024 USDA market data CSVs are auto-imported (~8,300 rows total).
+Server starts on http://localhost:8000. On first startup, the 2023 USDA market data CSV is auto-imported. The 2024 CSV is **not** imported at startup — it gets imported automatically when you start the simulation (Step 3 of the Risk Monitoring workflow below), so you can first set up alerts and then watch them trigger against the 2024 data in real time.
 
-### 4. Start the Frontend
+### 4. Install Frontend Dependencies & Start
 
 ```bash
-cd frontend && npm install && npm run dev
+cd frontend && npm install
+npm run dev
 ```
 
 Dev server starts on http://localhost:5173.

@@ -90,34 +90,56 @@ func autoImportMarketData(database *sql.DB) error {
 	return nil
 }
 
+// import2024MarketData imports the 2024 CSV on demand (used by simulation).
+func import2024MarketData(database *sql.DB) error {
+	// Check if already loaded
+	var count int
+	if err := database.QueryRow(
+		"SELECT COUNT(*) FROM market_data WHERE EXTRACT(YEAR FROM report_date) = 2024",
+	).Scan(&count); err != nil {
+		return fmt.Errorf("checking 2024 market_data count: %w", err)
+	}
+	if count > 0 {
+		log.Printf("2024 market data already loaded (%d rows), skipping import", count)
+		return nil
+	}
+
+	path := findCSVPath("AMS_sc_terminal_daily_2024.csv")
+	if path == "" {
+		return fmt.Errorf("2024 CSV file not found")
+	}
+	return importCSV(database, path)
+}
+
 func findCSVPaths() []string {
-	csvFiles := []string{
-		"AMS_sc_terminal_daily_2023.csv",
-		"AMS_sc_terminal_daily_2024.csv",
+	// Only auto-import 2023 data on startup.
+	// 2024 data is imported on demand when the simulation starts.
+	path := findCSVPath("AMS_sc_terminal_daily_2023.csv")
+	if path == "" {
+		return nil
+	}
+	return []string{path}
+}
+
+func findCSVPath(name string) string {
+	candidates := []string{
+		"../" + name,
+		name,
 	}
 
-	var found []string
-	for _, name := range csvFiles {
-		candidates := []string{
-			"../" + name,
-			name,
-		}
+	// Also try relative to source file
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		dir := filepath.Dir(filename)
+		candidates = append(candidates, filepath.Join(dir, "..", name))
+	}
 
-		// Also try relative to source file
-		_, filename, _, ok := runtime.Caller(0)
-		if ok {
-			dir := filepath.Dir(filename)
-			candidates = append(candidates, filepath.Join(dir, "..", name))
-		}
-
-		for _, path := range candidates {
-			if _, err := os.Stat(path); err == nil {
-				found = append(found, path)
-				break
-			}
+	for _, path := range candidates {
+		if _, err := os.Stat(path); err == nil {
+			return path
 		}
 	}
-	return found
+	return ""
 }
 
 func extractYearFromPath(path string) int {

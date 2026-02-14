@@ -104,22 +104,19 @@ INSERT INTO users (id, client_id, name, email, role) VALUES
 
 -- Commodities
 INSERT INTO commodities (id, code, name, unit) VALUES
-    (1, 'CORN',        'Corn',        'crates'),
-    (2, 'WHEAT',       'Wheat',       'bushels'),
-    (3, 'SOYBEAN_OIL', 'Soybean Oil', 'lbs');
+    (1, 'CORN', 'Corn', 'crates');
 
--- Positions (Alice @ Acme has exposure to all three)
+-- Positions (Alice @ Acme has long and short corn exposure)
 INSERT INTO positions (client_id, user_id, commodity_id, volume, direction, entry_price) VALUES
     (1, 1, 1, 50000,  'long',  33.00),
-    (1, 1, 2, 25000,  'long',  5.80),
-    (1, 1, 3, 10000,  'short', 0.45),
+    (1, 1, 1, 20000,  'short', 38.00),
     (1, 2, 1, 30000,  'long',  34.00);
 
 -- Positions (Carol @ Global Grain)
 INSERT INTO positions (client_id, user_id, commodity_id, volume, direction, entry_price) VALUES
-    (2, 3, 2, 100000, 'long',  5.70);
+    (2, 3, 1, 100000, 'long',  32.00);
 
--- Price data: 30 days for each commodity
+-- Price data: 30 days for corn
 -- (Using generate_series for realistic historical data)
 INSERT INTO price_data (commodity_id, price, recorded_at)
 SELECT
@@ -128,33 +125,19 @@ SELECT
     d::date
 FROM generate_series(CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, '1 day') AS d;
 
-INSERT INTO price_data (commodity_id, price, recorded_at)
-SELECT
-    2,
-    ROUND((5.50 + random() * 0.70)::numeric, 4),
-    d::date
-FROM generate_series(CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, '1 day') AS d;
-
-INSERT INTO price_data (commodity_id, price, recorded_at)
-SELECT
-    3,
-    ROUND((0.42 + random() * 0.06)::numeric, 4),
-    d::date
-FROM generate_series(CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, '1 day') AS d;
-
 -- Existing alerts (so candidates can see real data)
 INSERT INTO price_alerts (id, client_id, user_id, commodity_id, condition, threshold_price, status, notes) VALUES
-    (1, 1, 1, 1, 'below', 28.00, 'active',    'Stop-loss on corn position'),
-    (2, 1, 1, 2, 'above', 6.10, 'active',    'Take-profit on wheat'),
+    (1, 1, 1, 1, 'below', 28.00, 'active',    'Stop-loss on corn long position'),
+    (2, 1, 1, 1, 'above', 42.00, 'active',    'Take-profit on corn short position'),
     (3, 1, 2, 1, 'below', 27.00, 'active',    'Bob watching corn dip'),
-    (4, 2, 3, 2, 'below', 5.60, 'triggered', 'Wheat floor alert');
+    (4, 2, 3, 1, 'below', 29.00, 'triggered', 'Corn floor alert');
 
 -- History for existing alerts
 INSERT INTO alert_history (alert_id, changed_by_user_id, change_type, new_status, new_threshold, changed_at) VALUES
     (1, 1, 'created',   'active',    28.00, NOW() - INTERVAL '7 days'),
-    (2, 1, 'created',   'active',    6.10, NOW() - INTERVAL '5 days'),
+    (2, 1, 'created',   'active',    42.00, NOW() - INTERVAL '5 days'),
     (3, 2, 'created',   'active',    27.00, NOW() - INTERVAL '3 days'),
-    (4, 3, 'created',   'active',    5.60, NOW() - INTERVAL '10 days'),
+    (4, 3, 'created',   'active',    29.00, NOW() - INTERVAL '10 days'),
     (4, 3, 'triggered', 'triggered', NULL,  NOW() - INTERVAL '2 days');
 
 -- Reset sequences to avoid ID conflicts
