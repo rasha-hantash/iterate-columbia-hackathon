@@ -47,103 +47,96 @@ export default function MarketDataView() {
   }
 
   return (
-    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">Market Data</h2>
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              className="block rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white border px-3 py-1.5"
-            >
-              <option value="">All Locations</option>
-              {locations.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
-            </select>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="block rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 border px-3 py-1.5"
-              placeholder="Start date"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="block rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 border px-3 py-1.5"
-              placeholder="End date"
-            />
-          </div>
+    <div className="bg-sand-50 border border-sand-200 rounded overflow-hidden">
+      <div className="flex items-center justify-between h-10 px-3 border-b border-sand-200">
+        <h2 className="text-[13px] font-medium text-sand-800">Market Data</h2>
+        <div className="flex flex-wrap gap-2">
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            className="rounded border border-sand-300 bg-sand-50 text-[12px] text-sand-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
+          >
+            <option value="">All Locations</option>
+            {locations.map((loc) => (
+              <option key={loc} value={loc}>
+                {loc}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="rounded border border-sand-300 bg-sand-50 text-[12px] text-sand-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="rounded border border-sand-300 bg-sand-50 text-[12px] text-sand-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
+          />
         </div>
       </div>
 
       {error && (
-        <div className="px-6 py-3 bg-red-50 text-red-700 text-sm">
+        <div className="px-3 py-2 bg-red-50 border-b border-red-200 text-red-700 text-[13px]">
           {error}
         </div>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-          <span className="ml-3 text-gray-500 text-sm">
-            Loading market data...
-          </span>
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sand-500"></div>
+          <span className="ml-2 text-[13px] text-sand-500">Loading...</span>
         </div>
       ) : data.length === 0 ? (
-        <div className="px-6 py-8 text-center text-gray-500">
-          No market data found. Adjust your filters or check that the backend
-          has imported the CSV data.
+        <div className="px-3 py-8 text-center text-[13px] text-sand-500">
+          No market data found. Adjust filters or check the backend.
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <table className="min-w-full divide-y divide-sand-200">
+            <thead>
+              <tr className="bg-sand-100/50">
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Origin
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Low Price
+                <th className="px-3 py-2 text-right text-[11px] font-medium text-sand-500 uppercase tracking-wider">
+                  Low
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  High Price
+                <th className="px-3 py-2 text-right text-[11px] font-medium text-sand-500 uppercase tracking-wider">
+                  High
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Properties
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-sand-200/60">
               {data.map((row) => (
-                <tr key={row.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <tr key={row.id} className="hover:bg-sand-100/50">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-600">
                     {formatDate(row.report_date)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-[13px] font-medium text-sand-800">
                     {row.location}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-600">
                     {row.origin}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-700 text-right tabular-nums">
                     {formatCurrency(row.low_price)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                  <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-700 text-right tabular-nums">
                     {formatCurrency(row.high_price)}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                  <td className="px-3 py-2.5 text-[12px] text-sand-500 max-w-xs truncate">
                     {row.properties || "-"}
                   </td>
                 </tr>

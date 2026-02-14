@@ -34,20 +34,37 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-sand-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <h1 className="text-xl font-bold text-gray-900">
-              Commodity Alert Manager
-            </h1>
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-600">User:</label>
+      <header className="bg-sand-50 border-b border-sand-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex items-center justify-between h-11">
+            <div className="flex items-center gap-6">
+              <h1 className="text-[13px] font-semibold text-sand-800">
+                Commodity Alerts
+              </h1>
+              <nav className="flex items-center gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`px-2.5 py-1 rounded text-[13px] font-medium ${
+                      activeTab === tab.key
+                        ? "bg-sand-200 text-sand-800"
+                        : "text-sand-500 hover:text-sand-700 hover:bg-sand-200/50"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-sand-500">User:</span>
               <select
                 value={userId}
                 onChange={handleUserChange}
-                className="block rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white border px-3 py-1.5"
+                className="rounded border border-sand-300 bg-sand-50 text-[13px] text-sand-700 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
               >
                 {USERS.map((u) => (
                   <option key={u.id} value={u.id}>
@@ -60,29 +77,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.key
-                    ? "border-indigo-600 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-6xl mx-auto px-4 py-4">
         <div key={renderKey}>
           {activeTab === "analysis" && <AIAnalysis />}
           {activeTab === "alerts" && <AlertsPage />}

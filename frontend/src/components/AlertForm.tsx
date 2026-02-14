@@ -66,32 +66,32 @@ export default function AlertForm({ onAlertCreated }: AlertFormProps) {
   const currentPrice = getCurrentPrice();
 
   return (
-    <div className="bg-white shadow-sm rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="bg-sand-50 border border-sand-200 rounded p-4">
+      <h2 className="text-[13px] font-medium text-sand-800 mb-3">
         Create Alert
       </h2>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-sm">
+        <div className="mb-3 bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-[13px]">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm">
+        <div className="mb-3 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded text-[13px]">
           Alert created successfully!
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-[12px] font-medium text-sand-600 mb-1">
             Commodity
           </label>
           <select
             value={commodityCode}
             onChange={(e) => setCommodityCode(e.target.value)}
-            className="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white border px-3 py-2"
+            className="block w-full rounded border border-sand-300 bg-sand-50 text-[13px] text-sand-700 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
           >
             {commodities.map((c) => (
               <option key={c.id} value={c.code}>
@@ -102,17 +102,17 @@ export default function AlertForm({ onAlertCreated }: AlertFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-[12px] font-medium text-sand-600 mb-1">
             Condition
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               type="button"
               onClick={() => setCondition("above")}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border ${
+              className={`flex-1 px-3 py-1.5 text-[13px] font-medium rounded border ${
                 condition === "above"
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  ? "bg-sand-700 text-sand-50 border-sand-700"
+                  : "bg-sand-50 text-sand-600 border-sand-300 hover:bg-sand-100"
               }`}
             >
               Above
@@ -120,10 +120,10 @@ export default function AlertForm({ onAlertCreated }: AlertFormProps) {
             <button
               type="button"
               onClick={() => setCondition("below")}
-              className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg border ${
+              className={`flex-1 px-3 py-1.5 text-[13px] font-medium rounded border ${
                 condition === "below"
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                  ? "bg-sand-700 text-sand-50 border-sand-700"
+                  : "bg-sand-50 text-sand-600 border-sand-300 hover:bg-sand-100"
               }`}
             >
               Below
@@ -132,48 +132,46 @@ export default function AlertForm({ onAlertCreated }: AlertFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-[12px] font-medium text-sand-600 mb-1">
             Threshold Price ($)
           </label>
-          <div className="relative">
-            <input
-              type="number"
-              step="0.0001"
-              min="0"
-              value={thresholdPrice}
-              onChange={(e) => setThresholdPrice(e.target.value)}
-              placeholder="0.0000"
-              className="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 border px-3 py-2"
-            />
-          </div>
+          <input
+            type="number"
+            step="0.0001"
+            min="0"
+            value={thresholdPrice}
+            onChange={(e) => setThresholdPrice(e.target.value)}
+            placeholder="0.0000"
+            className="block w-full rounded border border-sand-300 bg-sand-50 text-[13px] text-sand-700 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
+          />
           {currentPrice !== null && (
-            <p className="mt-1 text-xs text-gray-500">
-              Current price: ${currentPrice.toFixed(4)}
+            <p className="mt-1 text-[11px] text-sand-400 tabular-nums">
+              Current: ${currentPrice.toFixed(4)}
             </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-[12px] font-medium text-sand-600 mb-1">
             Notes
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            placeholder="Optional notes about this alert..."
-            className="block w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500 border px-3 py-2"
+            placeholder="Optional notes..."
+            className="block w-full rounded border border-sand-300 bg-sand-50 text-[13px] text-sand-700 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-sand-400 focus:border-sand-400"
           />
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="w-full inline-flex items-center justify-center px-3 py-1.5 text-[13px] font-medium rounded text-sand-50 bg-sand-700 hover:bg-sand-800 focus:outline-none focus:ring-1 focus:ring-sand-500 disabled:opacity-50"
         >
           {submitting ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-sand-200 mr-1.5"></div>
               Creating...
             </>
           ) : (

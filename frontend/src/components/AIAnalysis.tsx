@@ -88,95 +88,95 @@ export default function AIAnalysis() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        <span className="ml-3 text-gray-600">Loading positions...</span>
+      <div className="flex items-center justify-center py-10">
+        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sand-500"></div>
+        <span className="ml-2 text-[13px] text-sand-500">Loading positions...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-[13px]">
           {error}
         </div>
       )}
 
       {/* Positions Table */}
-      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-sand-50 border border-sand-200 rounded overflow-hidden">
+        <div className="flex items-center justify-between h-10 px-3 border-b border-sand-200">
+          <h2 className="text-[13px] font-medium text-sand-800">
             Your Positions
           </h2>
         </div>
         {positions.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-500">
+          <div className="px-3 py-6 text-center text-[13px] text-sand-500">
             No positions found for this user.
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <table className="min-w-full divide-y divide-sand-200">
+            <thead>
+              <tr className="bg-sand-100/50">
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Commodity
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-right text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Volume
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-[11px] font-medium text-sand-500 uppercase tracking-wider">
                   Direction
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Entry Price
+                <th className="px-3 py-2 text-right text-[11px] font-medium text-sand-500 uppercase tracking-wider">
+                  Entry
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Current Price
+                <th className="px-3 py-2 text-right text-[11px] font-medium text-sand-500 uppercase tracking-wider">
+                  Current
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Unrealized P&L
+                <th className="px-3 py-2 text-right text-[11px] font-medium text-sand-500 uppercase tracking-wider">
+                  P&L
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-sand-200/60">
               {positions.map((pos) => {
                 const currentPrice = getPriceForCommodity(pos.commodity_id);
                 const pnl =
                   currentPrice !== null ? calcPnL(pos, currentPrice) : null;
                 return (
-                  <tr key={pos.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={pos.id} className="hover:bg-sand-100/50">
+                    <td className="px-3 py-2.5 whitespace-nowrap text-[13px] font-medium text-sand-800">
                       {pos.commodity_name}
-                      <span className="ml-2 text-xs text-gray-500">
+                      <span className="ml-1.5 text-[11px] text-sand-400">
                         {pos.commodity_code}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                    <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-700 text-right tabular-nums">
                       {pos.volume.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-3 py-2.5 whitespace-nowrap">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`inline-flex px-1.5 py-0.5 text-[11px] font-medium rounded-sm ${
                           pos.direction === "long"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-50 text-green-700 border border-green-200"
+                            : "bg-red-50 text-red-700 border border-red-200"
                         }`}
                       >
                         {pos.direction.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                    <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-700 text-right tabular-nums">
                       ${pos.entry_price.toFixed(4)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                    <td className="px-3 py-2.5 whitespace-nowrap text-[13px] text-sand-700 text-right tabular-nums">
                       {currentPrice !== null
                         ? `$${currentPrice.toFixed(4)}`
                         : "N/A"}
                     </td>
                     <td
-                      className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-right ${
+                      className={`px-3 py-2.5 whitespace-nowrap text-[13px] font-medium text-right tabular-nums ${
                         pnl === null
-                          ? "text-gray-400"
+                          ? "text-sand-400"
                           : pnl >= 0
                           ? "text-green-600"
                           : "text-red-600"
@@ -205,17 +205,17 @@ export default function AIAnalysis() {
         <button
           onClick={handleAnalyze}
           disabled={analyzing || positions.length === 0}
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center px-4 py-2 text-[13px] font-medium rounded text-sand-50 bg-sand-700 hover:bg-sand-800 focus:outline-none focus:ring-1 focus:ring-sand-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {analyzing ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-              Claude is analyzing your positions...
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sand-200 mr-2"></div>
+              Analyzing...
             </>
           ) : (
             <>
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-4 h-4 mr-1.5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -227,7 +227,7 @@ export default function AIAnalysis() {
                   d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                 />
               </svg>
-              Analyze My Positions
+              Analyze Positions
             </>
           )}
         </button>
@@ -235,11 +235,11 @@ export default function AIAnalysis() {
 
       {/* Reasoning */}
       {reasoning && (
-        <div className="bg-white shadow-sm rounded-lg p-6 border-l-4 border-indigo-500">
-          <h3 className="text-sm font-semibold text-indigo-700 uppercase tracking-wider mb-2">
+        <div className="bg-sand-50 border border-sand-200 border-l-2 border-l-sand-500 rounded p-4">
+          <h3 className="text-[11px] font-medium text-sand-500 uppercase tracking-wider mb-1.5">
             AI Analysis
           </h3>
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+          <p className="text-[13px] text-sand-700 whitespace-pre-wrap leading-relaxed">
             {reasoning}
           </p>
         </div>
@@ -248,51 +248,51 @@ export default function AIAnalysis() {
       {/* Suggestion Cards */}
       {suggestions.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          <h3 className="text-[13px] font-medium text-sand-800 mb-2">
             Suggested Alerts
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {suggestions.map((s, idx) => (
               <div
                 key={idx}
-                className="bg-white shadow-sm rounded-lg p-5 border border-gray-200"
+                className="bg-sand-50 border border-sand-200 rounded p-3"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-bold text-gray-900">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[13px] font-semibold text-sand-800">
                     {s.commodity_code}
                   </span>
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    className={`inline-flex px-1.5 py-0.5 text-[11px] font-medium rounded-sm ${
                       s.condition === "above"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-orange-100 text-orange-800"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : "bg-orange-50 text-orange-700 border border-orange-200"
                     }`}
                   >
                     {s.condition.toUpperCase()}
                   </span>
                 </div>
-                <div className="text-2xl font-bold text-gray-900 mb-2">
+                <div className="text-xl font-semibold text-sand-800 mb-1.5 tabular-nums">
                   ${s.threshold_price.toFixed(4)}
                 </div>
-                <p className="text-sm text-gray-600 mb-4">{s.notes}</p>
+                <p className="text-[12px] text-sand-600 mb-3 leading-relaxed">{s.notes}</p>
                 <button
                   onClick={() => handleAccept(idx, s)}
                   disabled={accepted.has(idx) || accepting.has(idx)}
-                  className={`w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg ${
+                  className={`w-full inline-flex items-center justify-center px-3 py-1.5 text-[12px] font-medium rounded ${
                     accepted.has(idx)
-                      ? "bg-green-100 text-green-800 cursor-default"
-                      : "bg-indigo-600 text-white hover:bg-indigo-700"
+                      ? "bg-green-50 text-green-700 border border-green-200 cursor-default"
+                      : "bg-sand-700 text-sand-50 hover:bg-sand-800"
                   } disabled:opacity-75`}
                 >
                   {accepting.has(idx) ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-sand-200 mr-1.5"></div>
                       Creating...
                     </>
                   ) : accepted.has(idx) ? (
                     <>
                       <svg
-                        className="w-4 h-4 mr-2"
+                        className="w-3 h-3 mr-1"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -304,7 +304,7 @@ export default function AIAnalysis() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      Alert Created
+                      Created
                     </>
                   ) : (
                     "Accept Alert"
