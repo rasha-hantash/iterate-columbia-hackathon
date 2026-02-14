@@ -1,0 +1,4 @@
+eval_results/*.csv
+__pycache__/
+*.pyc
+.venv/
