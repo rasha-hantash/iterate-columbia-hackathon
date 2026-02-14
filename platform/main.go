@@ -87,6 +87,15 @@ func main() {
 	var aiHandler *AIHandler
 	if anthropicKey != "" {
 		aiHandler = NewAIHandler(svc, anthropicKey)
+
+		wcAPIKey := os.Getenv("WHITECIRCLE_API_KEY")
+		wcDeploymentID := os.Getenv("WHITECIRCLE_DEPLOYMENT_ID")
+		if wcAPIKey != "" && wcDeploymentID != "" {
+			aiHandler.whiteCircle = NewWhiteCircleClient(wcAPIKey, wcDeploymentID)
+			log.Println("White Circle online evaluation enabled")
+		} else {
+			log.Println("Warning: WHITECIRCLE_API_KEY or WHITECIRCLE_DEPLOYMENT_ID not set, online evaluation disabled")
+		}
 	}
 
 	// Auto-import market data on startup
@@ -180,6 +189,30 @@ func main() {
 		aiHandler.HandleAnalyzePositions(w, r, user.ID, user.ClientID)
 	})
 
+	mux.HandleFunc("/analyze-positions-market", func(w http.ResponseWriter, r *http.Request) {
+		user := getCurrentUser(w, r)
+		if user == nil {
+			return
+		}
+		if r.Method != http.MethodPost {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		if aiHandler == nil {
+			respondError(w, http.StatusServiceUnavailable, "AI analysis is not configured (ANTHROPIC_API_KEY not set)")
+			return
+		}
+		aiHandler.HandleAnalyzeWithMarketData(w, r, user.ID, user.ClientID)
+	})
+
+	mux.HandleFunc("/market-data/monthly-analysis", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		handler.HandleGetMonthlyAnalysis(w, r)
+	})
+
 	mux.HandleFunc("/market-data", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -187,6 +220,10 @@ func main() {
 		}
 		handleListMarketData(w, r, db)
 	})
+
+	// Simulation routes
+	simManager := NewSimulationManager(svc, db)
+	registerSimulationRoutes(mux, simManager)
 
 	fmt.Println("Server running on http://localhost:8000")
 	log.Fatal(http.ListenAndServe(":8000", corsMiddleware(mux)))

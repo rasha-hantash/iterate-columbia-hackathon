@@ -65,6 +65,18 @@ type PricePoint struct {
 	RecordedAt    string  `json:"recorded_at"`
 }
 
+type MonthlyPriceSummary struct {
+	Year        int     `json:"year"`
+	Month       int     `json:"month"`
+	MonthName   string  `json:"month_name"`
+	SampleCount int     `json:"sample_count"`
+	AvgPrice    float64 `json:"avg_price"`
+	MinPrice    float64 `json:"min_price"`
+	MaxPrice    float64 `json:"max_price"`
+	AvgLow      float64 `json:"avg_low"`
+	AvgHigh     float64 `json:"avg_high"`
+}
+
 type AlertService struct {
 	db *sql.DB
 }
@@ -322,4 +334,65 @@ func (s *AlertService) GetCurrentPrices() ([]PricePoint, error) {
 		return nil, fmt.Errorf("iterating price rows: %w", err)
 	}
 	return prices, nil
+}
+
+func (s *AlertService) GetMonthlyPriceAnalysis(year int, commodity string) ([]MonthlyPriceSummary, error) {
+	monthNames := []string{"", "January", "February", "March", "April", "May", "June",
+		"July", "August", "September", "October", "November", "December"}
+
+	rows, err := s.db.Query(`
+		SELECT
+			EXTRACT(MONTH FROM report_date)::int AS month,
+			COUNT(*) AS sample_count,
+			ROUND(AVG(COALESCE((mostly_low_price + mostly_high_price) / 2.0,
+			                    (low_price + high_price) / 2.0))::numeric, 2) AS avg_price,
+			ROUND(MIN(low_price)::numeric, 2) AS min_price,
+			ROUND(MAX(high_price)::numeric, 2) AS max_price,
+			ROUND(AVG(low_price)::numeric, 2) AS avg_low,
+			ROUND(AVG(high_price)::numeric, 2) AS avg_high
+		FROM market_data
+		WHERE commodity ILIKE '%' || $1 || '%'
+		  AND EXTRACT(YEAR FROM report_date) = $2
+		  AND low_price IS NOT NULL
+		GROUP BY EXTRACT(MONTH FROM report_date)
+		ORDER BY month`, commodity, year)
+	if err != nil {
+		return nil, fmt.Errorf("querying monthly price analysis: %w", err)
+	}
+	defer rows.Close()
+
+	summaries := []MonthlyPriceSummary{}
+	for rows.Next() {
+		var s MonthlyPriceSummary
+		if err := rows.Scan(&s.Month, &s.SampleCount, &s.AvgPrice,
+			&s.MinPrice, &s.MaxPrice, &s.AvgLow, &s.AvgHigh); err != nil {
+			return nil, fmt.Errorf("scanning monthly summary row: %w", err)
+		}
+		s.Year = year
+		if s.Month >= 1 && s.Month <= 12 {
+			s.MonthName = monthNames[s.Month]
+		}
+		summaries = append(summaries, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating monthly summary rows: %w", err)
+	}
+	return summaries, nil
+}
+
+func (s *AlertService) ResetAlerts(clientID int, commodityCode string) (int, error) {
+	result, err := s.db.Exec(`
+		UPDATE price_alerts pa
+		SET status = 'active', updated_at = NOW()
+		FROM commodities c
+		WHERE c.id = pa.commodity_id
+		  AND pa.client_id = $1
+		  AND c.code = $2
+		  AND pa.status = 'triggered'
+		  AND pa.deleted_at IS NULL`, clientID, commodityCode)
+	if err != nil {
+		return 0, fmt.Errorf("resetting alerts: %w", err)
+	}
+	n, _ := result.RowsAffected()
+	return int(n), nil
 }

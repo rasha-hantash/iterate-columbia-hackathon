@@ -59,46 +59,76 @@ func autoImportMarketData(database *sql.DB) error {
 	database.Exec("CREATE INDEX IF NOT EXISTS idx_market_data_date ON market_data (report_date)")
 	database.Exec("CREATE INDEX IF NOT EXISTS idx_market_data_commodity ON market_data (commodity)")
 
-	// Check if table already has data
-	var count int
-	if err := database.QueryRow("SELECT COUNT(*) FROM market_data").Scan(&count); err != nil {
-		return fmt.Errorf("checking market_data count: %w", err)
-	}
-	if count > 0 {
-		log.Printf("Market data already loaded (%d rows), skipping import", count)
+	// Find and import all CSV files
+	csvPaths := findCSVPaths()
+	if len(csvPaths) == 0 {
+		log.Println("No CSV files found, skipping market data import")
 		return nil
 	}
 
-	// Find CSV file relative to this source file's directory
-	csvPath := findCSVPath()
-	if csvPath == "" {
-		log.Println("CSV file not found, skipping market data import")
-		return nil
-	}
+	for _, csvPath := range csvPaths {
+		// Check if data for this file's year is already loaded
+		year := extractYearFromPath(csvPath)
+		if year > 0 {
+			var count int
+			if err := database.QueryRow(
+				"SELECT COUNT(*) FROM market_data WHERE EXTRACT(YEAR FROM report_date) = $1", year,
+			).Scan(&count); err != nil {
+				return fmt.Errorf("checking market_data count for year %d: %w", year, err)
+			}
+			if count > 0 {
+				log.Printf("Market data for %d already loaded (%d rows), skipping %s", year, count, csvPath)
+				continue
+			}
+		}
 
-	return importCSV(database, csvPath)
-}
-
-func findCSVPath() string {
-	// Try relative to working directory
-	candidates := []string{
-		"../AMS_sc_terminal_daily_20260214-090911.csv",
-		"AMS_sc_terminal_daily_20260214-090911.csv",
-	}
-
-	// Also try relative to source file
-	_, filename, _, ok := runtime.Caller(0)
-	if ok {
-		dir := filepath.Dir(filename)
-		candidates = append(candidates, filepath.Join(dir, "..", "AMS_sc_terminal_daily_20260214-090911.csv"))
-	}
-
-	for _, path := range candidates {
-		if _, err := os.Stat(path); err == nil {
-			return path
+		if err := importCSV(database, csvPath); err != nil {
+			log.Printf("Warning: failed to import %s: %v", csvPath, err)
 		}
 	}
-	return ""
+
+	return nil
+}
+
+func findCSVPaths() []string {
+	csvFiles := []string{
+		"AMS_sc_terminal_daily_2023.csv",
+		"AMS_sc_terminal_daily_2024.csv",
+	}
+
+	var found []string
+	for _, name := range csvFiles {
+		candidates := []string{
+			"../" + name,
+			name,
+		}
+
+		// Also try relative to source file
+		_, filename, _, ok := runtime.Caller(0)
+		if ok {
+			dir := filepath.Dir(filename)
+			candidates = append(candidates, filepath.Join(dir, "..", name))
+		}
+
+		for _, path := range candidates {
+			if _, err := os.Stat(path); err == nil {
+				found = append(found, path)
+				break
+			}
+		}
+	}
+	return found
+}
+
+func extractYearFromPath(path string) int {
+	base := filepath.Base(path)
+	// Look for 4-digit year pattern in filename
+	for i := 0; i <= len(base)-4; i++ {
+		if y, err := strconv.Atoi(base[i : i+4]); err == nil && y >= 2000 && y <= 2099 {
+			return y
+		}
+	}
+	return 0
 }
 
 func importCSV(database *sql.DB, csvPath string) error {

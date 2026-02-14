@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 )
@@ -141,4 +142,28 @@ func (h *AlertHandler) HandleGetPrices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondJSON(w, http.StatusOK, prices)
+}
+
+func (h *AlertHandler) HandleGetMonthlyAnalysis(w http.ResponseWriter, r *http.Request) {
+	yearStr := r.URL.Query().Get("year")
+	if yearStr == "" {
+		yearStr = "2023"
+	}
+	year := 2023
+	if _, err := fmt.Sscanf(yearStr, "%d", &year); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid year parameter")
+		return
+	}
+
+	commodity := r.URL.Query().Get("commodity")
+	if commodity == "" {
+		commodity = "corn"
+	}
+
+	summaries, err := h.service.GetMonthlyPriceAnalysis(year, commodity)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get monthly analysis")
+		return
+	}
+	respondJSON(w, http.StatusOK, summaries)
 }
