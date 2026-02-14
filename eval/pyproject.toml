@@ -1,0 +1,16 @@
+[project]
+name = "commodity-eval"
+version = "0.1.0"
+description = "Eval framework for commodity alert LLM suggestions"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "pydantic>=2.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/commodity_eval"]
