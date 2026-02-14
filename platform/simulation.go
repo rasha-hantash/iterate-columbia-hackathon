@@ -232,6 +232,7 @@ func (sm *SimulationManager) load2024Data() ([]dateGroup, int, error) {
 		WHERE EXTRACT(YEAR FROM report_date) = 2024
 		  AND commodity ILIKE '%corn%'
 		  AND low_price IS NOT NULL
+		  AND high_price IS NOT NULL
 		ORDER BY report_date ASC, location ASC`)
 	if err != nil {
 		return nil, 0, fmt.Errorf("querying 2024 market data: %w", err)
@@ -319,8 +320,10 @@ func (sm *SimulationManager) runSimulation(groups []dateGroup, userID, clientID 
 		sm.results.Events = append(sm.results.Events, event)
 		sm.mu.Unlock()
 
-		log.Printf("[Simulation] Date: %s | Price: $%.2f | Rows: %d | Triggered: %d",
-			group.date, event.RepresentativePrice, event.RowCount, len(event.TriggeredAlerts))
+		if len(event.TriggeredAlerts) > 0 {
+			log.Printf("[Simulation] Date: %s | Price: $%.2f | Triggered: %d",
+				group.date, event.RepresentativePrice, len(event.TriggeredAlerts))
+		}
 	}
 }
 

@@ -98,6 +98,7 @@ export default function AlertList({ refreshKey }: { refreshKey: number }) {
           No alerts found. Create one or adjust your filters.
         </div>
       ) : (
+        <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -136,7 +137,7 @@ export default function AlertList({ refreshKey }: { refreshKey: number }) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {statusBadge(a.status)}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                   {a.notes || "-"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -146,6 +147,7 @@ export default function AlertList({ refreshKey }: { refreshKey: number }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

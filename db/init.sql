@@ -104,7 +104,7 @@ INSERT INTO users (id, client_id, name, email, role) VALUES
 
 -- Commodities
 INSERT INTO commodities (id, code, name, unit) VALUES
-    (1, 'CORN', 'Corn', 'crates');
+    (1, 'CORN', 'Corn', '4 dozen');
 
 -- Positions (Alice @ Acme has long and short corn exposure)
 INSERT INTO positions (client_id, user_id, commodity_id, volume, direction, entry_price) VALUES
@@ -125,24 +125,7 @@ SELECT
     d::date
 FROM generate_series(CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, '1 day') AS d;
 
--- Existing alerts (so candidates can see real data)
-INSERT INTO price_alerts (id, client_id, user_id, commodity_id, condition, threshold_price, status, notes) VALUES
-    (1, 1, 1, 1, 'below', 28.00, 'active',    'Stop-loss on corn long position'),
-    (2, 1, 1, 1, 'above', 42.00, 'active',    'Take-profit on corn short position'),
-    (3, 1, 2, 1, 'below', 27.00, 'active',    'Bob watching corn dip'),
-    (4, 2, 3, 1, 'below', 29.00, 'triggered', 'Corn floor alert');
-
--- History for existing alerts
-INSERT INTO alert_history (alert_id, changed_by_user_id, change_type, new_status, new_threshold, changed_at) VALUES
-    (1, 1, 'created',   'active',    28.00, NOW() - INTERVAL '7 days'),
-    (2, 1, 'created',   'active',    42.00, NOW() - INTERVAL '5 days'),
-    (3, 2, 'created',   'active',    27.00, NOW() - INTERVAL '3 days'),
-    (4, 3, 'created',   'active',    29.00, NOW() - INTERVAL '10 days'),
-    (4, 3, 'triggered', 'triggered', NULL,  NOW() - INTERVAL '2 days');
-
 -- Reset sequences to avoid ID conflicts
 SELECT setval('clients_id_seq',    (SELECT MAX(id) FROM clients));
 SELECT setval('users_id_seq',      (SELECT MAX(id) FROM users));
 SELECT setval('commodities_id_seq',(SELECT MAX(id) FROM commodities));
-SELECT setval('price_alerts_id_seq', (SELECT MAX(id) FROM price_alerts));
-SELECT setval('alert_history_id_seq', (SELECT MAX(id) FROM alert_history));

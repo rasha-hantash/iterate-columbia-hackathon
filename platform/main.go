@@ -112,6 +112,11 @@ func main() {
 	}
 	defer db.Close()
 
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Cannot connect to database: %v", err)
+	}
+	log.Println("Database connected")
+
 	svc := NewAlertService(db)
 	handler := NewAlertHandler(svc)
 	var aiHandler *AIHandler
