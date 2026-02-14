@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -52,7 +53,28 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok", "database": "connected"})
 }
 
+// corsMiddleware wraps an http.Handler to add CORS headers.
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "X-User-ID, Content-Type")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
+	anthropicKey := os.Getenv("ANTHROPIC_API_KEY")
+	if anthropicKey == "" {
+		log.Println("Warning: ANTHROPIC_API_KEY not set, /analyze-positions endpoint will be disabled")
+	}
+
 	var err error
 	db, err = sql.Open("postgres", "host=localhost port=5432 user=edge password=edge_local dbname=edge_interview sslmode=disable")
 	if err != nil {
@@ -62,10 +84,58 @@ func main() {
 
 	svc := NewAlertService(db)
 	handler := NewAlertHandler(svc)
+	var aiHandler *AIHandler
+	if anthropicKey != "" {
+		aiHandler = NewAIHandler(svc, anthropicKey)
 
-	http.HandleFunc("/health", healthHandler)
+		wcAPIKey := os.Getenv("WHITECIRCLE_API_KEY")
+		wcDeploymentID := os.Getenv("WHITECIRCLE_DEPLOYMENT_ID")
+		if wcAPIKey != "" && wcDeploymentID != "" {
+			aiHandler.whiteCircle = NewWhiteCircleClient(wcAPIKey, wcDeploymentID)
+			log.Println("White Circle online evaluation enabled")
+		} else {
+			log.Println("Warning: WHITECIRCLE_API_KEY or WHITECIRCLE_DEPLOYMENT_ID not set, online evaluation disabled")
+		}
+	}
 
-	http.HandleFunc("/alerts", func(w http.ResponseWriter, r *http.Request) {
+	// Auto-import market data on startup
+	if err := autoImportMarketData(db); err != nil {
+		log.Printf("Warning: market data import failed: %v", err)
+	}
+
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/health", healthHandler)
+
+	mux.HandleFunc("/commodities", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		handler.HandleListCommodities(w, r)
+	})
+
+	mux.HandleFunc("/positions", func(w http.ResponseWriter, r *http.Request) {
+		user := getCurrentUser(w, r)
+		if user == nil {
+			return
+		}
+		if r.Method != http.MethodGet {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		handler.HandleListPositions(w, r, user.ID, user.ClientID)
+	})
+
+	mux.HandleFunc("/prices", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		handler.HandleGetPrices(w, r)
+	})
+
+	mux.HandleFunc("/alerts", func(w http.ResponseWriter, r *http.Request) {
 		user := getCurrentUser(w, r)
 		if user == nil {
 			return
@@ -81,7 +151,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/alerts/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/alerts/", func(w http.ResponseWriter, r *http.Request) {
 		user := getCurrentUser(w, r)
 		if user == nil {
 			return
@@ -103,6 +173,58 @@ func main() {
 		respondError(w, http.StatusNotFound, "Not found")
 	})
 
+	mux.HandleFunc("/analyze-positions", func(w http.ResponseWriter, r *http.Request) {
+		user := getCurrentUser(w, r)
+		if user == nil {
+			return
+		}
+		if r.Method != http.MethodPost {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		if aiHandler == nil {
+			respondError(w, http.StatusServiceUnavailable, "AI analysis is not configured (ANTHROPIC_API_KEY not set)")
+			return
+		}
+		aiHandler.HandleAnalyzePositions(w, r, user.ID, user.ClientID)
+	})
+
+	mux.HandleFunc("/analyze-positions-market", func(w http.ResponseWriter, r *http.Request) {
+		user := getCurrentUser(w, r)
+		if user == nil {
+			return
+		}
+		if r.Method != http.MethodPost {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		if aiHandler == nil {
+			respondError(w, http.StatusServiceUnavailable, "AI analysis is not configured (ANTHROPIC_API_KEY not set)")
+			return
+		}
+		aiHandler.HandleAnalyzeWithMarketData(w, r, user.ID, user.ClientID)
+	})
+
+	mux.HandleFunc("/market-data/monthly-analysis", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		handler.HandleGetMonthlyAnalysis(w, r)
+	})
+
+	mux.HandleFunc("/market-data", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+			return
+		}
+		handleListMarketData(w, r, db)
+	})
+
+	// Simulation routes
+	simManager := NewSimulationManager(svc, db)
+	registerSimulationRoutes(mux, simManager)
+
 	fmt.Println("Server running on http://localhost:8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Fatal(http.ListenAndServe(":8000", corsMiddleware(mux)))
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 )
@@ -114,4 +115,55 @@ func (h *AlertHandler) HandleTriggerAlert(w http.ResponseWriter, r *http.Request
 	}
 
 	respondJSON(w, http.StatusOK, alert)
+}
+
+func (h *AlertHandler) HandleListCommodities(w http.ResponseWriter, r *http.Request) {
+	commodities, err := h.service.ListCommodities()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to list commodities")
+		return
+	}
+	respondJSON(w, http.StatusOK, commodities)
+}
+
+func (h *AlertHandler) HandleListPositions(w http.ResponseWriter, r *http.Request, userID, clientID int) {
+	positions, err := h.service.ListPositions(userID, clientID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to list positions")
+		return
+	}
+	respondJSON(w, http.StatusOK, positions)
+}
+
+func (h *AlertHandler) HandleGetPrices(w http.ResponseWriter, r *http.Request) {
+	prices, err := h.service.GetCurrentPrices()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get prices")
+		return
+	}
+	respondJSON(w, http.StatusOK, prices)
+}
+
+func (h *AlertHandler) HandleGetMonthlyAnalysis(w http.ResponseWriter, r *http.Request) {
+	yearStr := r.URL.Query().Get("year")
+	if yearStr == "" {
+		yearStr = "2023"
+	}
+	year := 2023
+	if _, err := fmt.Sscanf(yearStr, "%d", &year); err != nil {
+		respondError(w, http.StatusBadRequest, "Invalid year parameter")
+		return
+	}
+
+	commodity := r.URL.Query().Get("commodity")
+	if commodity == "" {
+		commodity = "corn"
+	}
+
+	summaries, err := h.service.GetMonthlyPriceAnalysis(year, commodity)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get monthly analysis")
+		return
+	}
+	respondJSON(w, http.StatusOK, summaries)
 }
