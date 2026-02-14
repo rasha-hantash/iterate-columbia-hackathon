@@ -249,7 +249,7 @@ WHITECIRCLE_DEPLOYMENT_ID=your-deployment-uuid
 
 ## Prerequisites
 
-- Go 1.21+
+- Go 1.22+
 - Node.js 18+
 - Docker (for PostgreSQL) or PostgreSQL running locally
 - Anthropic API key
@@ -264,7 +264,7 @@ All Go source lives in `platform/` as a single `main` package.
 - `service.go` -- Business logic, SQL queries, monthly price analysis
 - `ai_handler.go` -- Claude API integration for position analysis (+ White Circle online eval)
 - `whitecircle.go` -- White Circle API client for real-time policy evaluation
-- `csv_import.go` -- Auto-imports 2023/2024 USDA market data CSVs on startup
+- `csv_import.go` -- Auto-imports 2023 USDA market data CSV on startup; 2024 CSV imported on-demand by simulation
 - `simulation.go` -- Real-time simulation engine with goroutine + channel pipeline
 
 Database schema and seed data live in `db/init.sql`. Key tables: `clients`, `users`, `commodities`, `positions`, `price_data`, `price_alerts`, `alert_history`, `market_data`.
@@ -277,10 +277,23 @@ Database schema and seed data live in `db/init.sql`. Key tables: `clients`, `use
 
 Use the user selector in the header to switch between Alice, Bob, and Carol (demonstrates multi-tenant isolation).
 
-## Seed Users
+## Seed Data
+
+**Users:**
 
 | ID | Name | Client | Role |
 |----|------|--------|------|
 | 1 | Alice Smith | Acme Foods | Risk Manager |
 | 2 | Bob Jones | Acme Foods | Procurement |
 | 3 | Carol Chen | Global Grain Co | Risk Manager |
+
+**Positions:**
+
+| User | Direction | Volume | Entry Price |
+|------|-----------|--------|-------------|
+| Alice | Long | 50,000 | $33.00 |
+| Alice | Short | 20,000 | $38.00 |
+| Bob | Long | 30,000 | $34.00 |
+| Carol | Long | 100,000 | $32.00 |
+
+No alerts are pre-seeded. Create them via the API or by accepting AI suggestions.
