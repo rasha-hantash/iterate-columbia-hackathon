@@ -105,8 +105,13 @@ func main() {
 		log.Println("Warning: ANTHROPIC_API_KEY not set, /analyze-positions endpoint will be disabled")
 	}
 
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		connStr = "host=localhost port=5432 user=edge password=edge_local dbname=edge_interview sslmode=disable"
+	}
+
 	var err error
-	db, err = sql.Open("postgres", "host=localhost port=5432 user=edge password=edge_local dbname=edge_interview sslmode=disable")
+	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}

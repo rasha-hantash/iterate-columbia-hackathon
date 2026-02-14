@@ -16,5 +16,29 @@ services:
       timeout: 3s
       retries: 5
 
+  backend:
+    build:
+      context: .
+      dockerfile: platform/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "host=postgres port=5432 user=edge password=edge_local dbname=edge_interview sslmode=disable"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      WHITECIRCLE_API_KEY: ${WHITECIRCLE_API_KEY:-}
+      WHITECIRCLE_DEPLOYMENT_ID: ${WHITECIRCLE_DEPLOYMENT_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
 volumes:
   pgdata:

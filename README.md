@@ -2,25 +2,37 @@
 
 A toy version of [Edge](https://try-edge.com) — a price alert microservice for agricultural commodity risk managers, with AI-powered position analysis and real-time risk monitoring. Go backend with PostgreSQL, React frontend with Tailwind CSS.
 
-## Quick Start
+## Quick Start (Docker)
 
-### 1. Start the Database
-
-**Docker Compose (recommended):**
+The fastest way to get everything running — no Go, Node.js, or PostgreSQL required locally.
 
 ```bash
-docker compose up -d
+# Optional: configure AI features
+cp .env.example .env   # then fill in ANTHROPIC_API_KEY etc.
+
+docker compose up --build
 ```
 
-**Or existing PostgreSQL:**
+- **Frontend:** http://localhost:3000
+- **Backend:** http://localhost:8000
+- **Database:** localhost:5432
+
+On first startup the 2023 USDA market data CSV is auto-imported. Stop everything with `docker compose down` (add `-v` to also wipe the database volume).
+
+### Manual Setup (without Docker)
+
+<details>
+<summary>Click to expand</summary>
+
+#### 1. Start the Database
 
 ```bash
+docker compose up postgres -d
+# or use an existing PostgreSQL:
 psql -h localhost -U edge -d edge_interview < db/init.sql
 ```
 
-### 2. Configure Environment
-
-Copy `.env.example` to `.env` and fill in your keys:
+#### 2. Configure Environment
 
 ```bash
 cp .env.example .env
@@ -32,15 +44,15 @@ WHITECIRCLE_API_KEY=wc-your-whitecircle-key
 WHITECIRCLE_DEPLOYMENT_ID=your-deployment-uuid
 ```
 
-### 3. Start the Backend
+#### 3. Start the Backend
 
 ```bash
 source .env && cd platform && go run .
 ```
 
-Server starts on http://localhost:8000. On first startup, the 2023 USDA market data CSV is auto-imported. The 2024 CSV is **not** imported at startup — it gets imported automatically when you start the simulation (Step 3 of the Risk Monitoring workflow below), so you can first set up alerts and then watch them trigger against the 2024 data in real time.
+Server starts on http://localhost:8000.
 
-### 4. Install Frontend Dependencies & Start
+#### 4. Install Frontend Dependencies & Start
 
 ```bash
 cd frontend && npm install
@@ -48,6 +60,8 @@ npm run dev
 ```
 
 Dev server starts on http://localhost:5173.
+
+</details>
 
 ## Running Tests
 
@@ -249,11 +263,9 @@ WHITECIRCLE_DEPLOYMENT_ID=your-deployment-uuid
 
 ## Prerequisites
 
-- Go 1.22+
-- Node.js 18+
-- Docker (for PostgreSQL) or PostgreSQL running locally
-- Anthropic API key
-- White Circle API key + deployment ID (optional, for online evaluation)
+**Docker (recommended):** Just Docker — everything else runs in containers.
+
+**Manual setup:** Go 1.22+, Node.js 18+, PostgreSQL 16+, Anthropic API key. White Circle API key + deployment ID optional (for online evaluation).
 
 ## Architecture
 
