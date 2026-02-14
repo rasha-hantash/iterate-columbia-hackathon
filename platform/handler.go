@@ -115,3 +115,30 @@ func (h *AlertHandler) HandleTriggerAlert(w http.ResponseWriter, r *http.Request
 
 	respondJSON(w, http.StatusOK, alert)
 }
+
+func (h *AlertHandler) HandleListCommodities(w http.ResponseWriter, r *http.Request) {
+	commodities, err := h.service.ListCommodities()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to list commodities")
+		return
+	}
+	respondJSON(w, http.StatusOK, commodities)
+}
+
+func (h *AlertHandler) HandleListPositions(w http.ResponseWriter, r *http.Request, userID, clientID int) {
+	positions, err := h.service.ListPositions(userID, clientID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to list positions")
+		return
+	}
+	respondJSON(w, http.StatusOK, positions)
+}
+
+func (h *AlertHandler) HandleGetPrices(w http.ResponseWriter, r *http.Request) {
+	prices, err := h.service.GetCurrentPrices()
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "Failed to get prices")
+		return
+	}
+	respondJSON(w, http.StatusOK, prices)
+}

@@ -11,6 +11,7 @@ import (
 var (
 	ErrNotFound         = errors.New("not found")
 	ErrInvalidCommodity = errors.New("invalid commodity code")
+	ErrNoPositions      = errors.New("no positions found")
 )
 
 type Commodity struct {
@@ -42,6 +43,26 @@ type CreateAlertParams struct {
 	Condition      string  `json:"condition"`
 	ThresholdPrice float64 `json:"threshold_price"`
 	Notes          string  `json:"notes"`
+}
+
+type Position struct {
+	ID            int     `json:"id"`
+	ClientID      int     `json:"client_id"`
+	UserID        int     `json:"user_id"`
+	CommodityID   int     `json:"commodity_id"`
+	CommodityCode string  `json:"commodity_code"`
+	CommodityName string  `json:"commodity_name"`
+	Volume        float64 `json:"volume"`
+	Direction     string  `json:"direction"`
+	EntryPrice    float64 `json:"entry_price"`
+}
+
+type PricePoint struct {
+	CommodityID   int     `json:"commodity_id"`
+	CommodityCode string  `json:"commodity_code"`
+	CommodityName string  `json:"commodity_name"`
+	Price         float64 `json:"price"`
+	RecordedAt    string  `json:"recorded_at"`
 }
 
 type AlertService struct {
@@ -225,4 +246,80 @@ func (s *AlertService) TriggerAlert(alertID, clientID, userID int, triggerPrice 
 	}
 
 	return &alert, nil
+}
+
+func (s *AlertService) ListCommodities() ([]Commodity, error) {
+	rows, err := s.db.Query("SELECT id, code, name, unit FROM commodities ORDER BY code")
+	if err != nil {
+		return nil, fmt.Errorf("querying commodities: %w", err)
+	}
+	defer rows.Close()
+
+	commodities := []Commodity{}
+	for rows.Next() {
+		var c Commodity
+		if err := rows.Scan(&c.ID, &c.Code, &c.Name, &c.Unit); err != nil {
+			return nil, fmt.Errorf("scanning commodity row: %w", err)
+		}
+		commodities = append(commodities, c)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating commodity rows: %w", err)
+	}
+	return commodities, nil
+}
+
+func (s *AlertService) ListPositions(userID, clientID int) ([]Position, error) {
+	rows, err := s.db.Query(`
+		SELECT p.id, p.client_id, p.user_id, p.commodity_id, c.code, c.name,
+		       p.volume, p.direction, p.entry_price
+		FROM positions p
+		JOIN commodities c ON c.id = p.commodity_id
+		WHERE p.user_id = $1 AND p.client_id = $2
+		ORDER BY p.id`, userID, clientID)
+	if err != nil {
+		return nil, fmt.Errorf("querying positions: %w", err)
+	}
+	defer rows.Close()
+
+	positions := []Position{}
+	for rows.Next() {
+		var p Position
+		if err := rows.Scan(&p.ID, &p.ClientID, &p.UserID, &p.CommodityID,
+			&p.CommodityCode, &p.CommodityName,
+			&p.Volume, &p.Direction, &p.EntryPrice); err != nil {
+			return nil, fmt.Errorf("scanning position row: %w", err)
+		}
+		positions = append(positions, p)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating position rows: %w", err)
+	}
+	return positions, nil
+}
+
+func (s *AlertService) GetCurrentPrices() ([]PricePoint, error) {
+	rows, err := s.db.Query(`
+		SELECT DISTINCT ON (pd.commodity_id)
+		       pd.commodity_id, c.code, c.name, pd.price, pd.recorded_at::text
+		FROM price_data pd
+		JOIN commodities c ON c.id = pd.commodity_id
+		ORDER BY pd.commodity_id, pd.recorded_at DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("querying current prices: %w", err)
+	}
+	defer rows.Close()
+
+	prices := []PricePoint{}
+	for rows.Next() {
+		var p PricePoint
+		if err := rows.Scan(&p.CommodityID, &p.CommodityCode, &p.CommodityName, &p.Price, &p.RecordedAt); err != nil {
+			return nil, fmt.Errorf("scanning price row: %w", err)
+		}
+		prices = append(prices, p)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating price rows: %w", err)
+	}
+	return prices, nil
 }
