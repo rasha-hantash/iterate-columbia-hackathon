@@ -159,11 +159,16 @@ Results save to `eval/eval_results/`. See `eval/EVAL.md` for full documentation.
 
 The `/analyze-positions` and `/analyze-positions-market` endpoints automatically send Claude's responses to [White Circle](https://whitecircle.ai) for real-time policy evaluation. This runs as a fire-and-forget goroutine — zero added latency to the user response.
 
-**Policies evaluated:**
+**Policies** (real-time, returned in API response):
 - **Financial Advice Guardrail** -- Flags if the model gives definitive trading instructions instead of analytical suggestions
 - **Commodity Scope Enforcement** -- Flags if the model discusses topics outside commodity price analysis
 
-Results are logged to stdout with the `[WhiteCircle]` prefix. If `WHITECIRCLE_API_KEY` or `WHITECIRCLE_DEPLOYMENT_ID` is missing from `.env`, online evaluation is silently disabled.
+**Metrics** (async, tracked in White Circle dashboard):
+- **Take-Profit Suggestions** -- Tracks how often the model suggests take-profit alerts
+- **Multi-Position Coverage** -- Tracks whether the model addresses all positions in a portfolio
+- **Historical Data Referenced** -- Tracks whether the model references seasonal patterns and historical trends
+
+Policy results are logged to stdout with the `[WhiteCircle]` prefix. Metrics are processed in the background and visible in the White Circle dashboard. If `WHITECIRCLE_API_KEY` or `WHITECIRCLE_DEPLOYMENT_ID` is missing from `.env`, online evaluation is silently disabled.
 
 ### Setting Up White Circle
 
@@ -195,9 +200,46 @@ curl -X POST 'https://us.whitecircle.ai/api/policy/create' \
   }'
 ```
 
-3. Create a deployment in the [White Circle dashboard](https://us.whitecircle.ai/deployments) -- click **Add Deployment**, name it (e.g. "Commodity Alerts"), and select both policies
+3. Create three metrics via the API:
 
-4. Copy the deployment ID and your API key into `.env`:
+```bash
+# Metric 1: Take-Profit Suggestions
+curl -X POST 'https://us.whitecircle.ai/api/metric/create' \
+  -H 'Authorization: Bearer wc-your-key' \
+  -H 'Content-Type: application/json' \
+  -H 'whitecircle-version: 2025-12-01' \
+  -d '{
+    "name": "Take-Profit Suggestions",
+    "flagged_content": "The AI suggests a take-profit alert — an alert designed to capture gains when price moves favorably. For long positions this means an alert above entry price; for short positions an alert below entry price.",
+    "allowed_content": "The AI suggests stop-loss alerts, discusses general risk without specific take-profit targets, or provides reasoning without alert suggestions."
+  }'
+
+# Metric 2: Multi-Position Coverage
+curl -X POST 'https://us.whitecircle.ai/api/metric/create' \
+  -H 'Authorization: Bearer wc-your-key' \
+  -H 'Content-Type: application/json' \
+  -H 'whitecircle-version: 2025-12-01' \
+  -d '{
+    "name": "Multi-Position Coverage",
+    "flagged_content": "The AI analyzes and suggests alerts for all commodity positions provided in the input. Every position mentioned by the user receives at least one alert suggestion.",
+    "allowed_content": "The AI only addresses some positions while ignoring others, or provides general commentary without position-specific alert suggestions."
+  }'
+
+# Metric 3: Historical Data Referenced
+curl -X POST 'https://us.whitecircle.ai/api/metric/create' \
+  -H 'Authorization: Bearer wc-your-key' \
+  -H 'Content-Type: application/json' \
+  -H 'whitecircle-version: 2025-12-01' \
+  -d '{
+    "name": "Historical Data Referenced",
+    "flagged_content": "The AI references historical price data, seasonal patterns, monthly trends, or past market behavior in its reasoning for alert suggestions.",
+    "allowed_content": "The AI only uses current positions and prices without referencing any historical context, seasonal patterns, or past trends."
+  }'
+```
+
+4. Create a deployment in the [White Circle dashboard](https://us.whitecircle.ai/deployments) -- click **Add Deployment**, name it (e.g. "Commodity Alerts"), and select both policies and all three metrics
+
+5. Copy the deployment ID and your API key into `.env`:
 
 ```env
 WHITECIRCLE_API_KEY=wc-your-key
