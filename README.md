@@ -18,16 +18,29 @@ docker compose up -d
 psql -h localhost -U edge -d edge_interview < db/init.sql
 ```
 
-### 2. Start the Backend
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and fill in your keys:
 
 ```bash
-export ANTHROPIC_API_KEY=your-key-here
-cd platform && go run .
+cp .env.example .env
+```
+
+```env
+ANTHROPIC_API_KEY=your-anthropic-key
+WHITECIRCLE_API_KEY=wc-your-whitecircle-key
+WHITECIRCLE_DEPLOYMENT_ID=your-deployment-uuid
+```
+
+### 3. Start the Backend
+
+```bash
+source .env && cd platform && go run .
 ```
 
 Server starts on http://localhost:8000. On first startup, both 2023 and 2024 USDA market data CSVs are auto-imported (~8,300 rows total).
 
-### 3. Start the Frontend
+### 4. Start the Frontend
 
 ```bash
 cd frontend && npm install && npm run dev
@@ -142,12 +155,23 @@ uv run python scripts/run_eval.py --analyzer-prompt v2 -v
 
 Results save to `eval/eval_results/`. See `eval/EVAL.md` for full documentation.
 
+## Online Evaluation (White Circle)
+
+The `/analyze-positions` and `/analyze-positions-market` endpoints automatically send Claude's responses to [White Circle](https://whitecircle.ai) for real-time policy evaluation. This runs as a fire-and-forget goroutine — zero added latency to the user response.
+
+**Policies evaluated:**
+- **Financial Advice Guardrail** -- Flags if the model gives definitive trading instructions instead of analytical suggestions
+- **Commodity Scope Enforcement** -- Flags if the model discusses topics outside commodity price analysis
+
+Results are logged to stdout with the `[WhiteCircle]` prefix. To enable, set `WHITECIRCLE_API_KEY` and `WHITECIRCLE_DEPLOYMENT_ID` in your `.env`. If either is missing, online evaluation is silently disabled.
+
 ## Prerequisites
 
 - Go 1.21+
 - Node.js 18+
 - Docker (for PostgreSQL) or PostgreSQL running locally
 - Anthropic API key
+- White Circle API key + deployment ID (optional, for online evaluation)
 
 ## Architecture
 
@@ -156,7 +180,8 @@ All Go source lives in `platform/` as a single `main` package.
 - `main.go` -- HTTP server, routing, auth middleware
 - `handler.go` -- Request parsing, validation, JSON responses
 - `service.go` -- Business logic, SQL queries, monthly price analysis
-- `ai_handler.go` -- Claude API integration for position analysis
+- `ai_handler.go` -- Claude API integration for position analysis (+ White Circle online eval)
+- `whitecircle.go` -- White Circle API client for real-time policy evaluation
 - `csv_import.go` -- Auto-imports 2023/2024 USDA market data CSVs on startup
 - `simulation.go` -- Real-time simulation engine with goroutine + channel pipeline
 
