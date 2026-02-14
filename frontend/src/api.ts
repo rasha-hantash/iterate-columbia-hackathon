@@ -84,7 +84,7 @@ export async function getMarketData(
 }
 
 export async function analyzePositions(): Promise<AnalysisResponse> {
-  return request<AnalysisResponse>("/analyze-positions", {
+  return request<AnalysisResponse>("/analyze-positions-market", {
     method: "POST",
   });
 }

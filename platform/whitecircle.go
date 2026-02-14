@@ -55,6 +55,7 @@ type wcResponse struct {
 // CheckSession sends the conversation to White Circle for policy evaluation.
 // Designed to be called as a goroutine (fire-and-forget). Logs the result.
 func (wc *WhiteCircleClient) CheckSession(ctx context.Context, userMessage string, analysis *AnalysisResponse) {
+	log.Println("[WhiteCircle] Sending session for policy evaluation...")
 	assistantMessage := formatAnalysisAsAssistantMessage(analysis)
 
 	reqBody := wcRequest{
@@ -109,6 +110,8 @@ func (wc *WhiteCircleClient) CheckSession(ctx context.Context, userMessage strin
 		if policy.Flagged {
 			log.Printf("[WhiteCircle]   FLAGGED policy=%s name=%q sources=%v",
 				policyID, policy.Name, policy.FlaggedSource)
+		} else {
+			log.Printf("[WhiteCircle]   policy=%q flagged=false", policy.Name)
 		}
 	}
 }

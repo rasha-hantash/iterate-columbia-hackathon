@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -67,6 +68,35 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// loggingMiddleware logs every HTTP request with method, path, status, and duration.
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		userID := r.Header.Get("X-User-ID")
+		if userID != "" {
+			log.Printf("[HTTP] %s %s (user=%s)", r.Method, r.URL.RequestURI(), userID)
+		} else {
+			log.Printf("[HTTP] %s %s", r.Method, r.URL.RequestURI())
+		}
+
+		sw := &statusWriter{ResponseWriter: w, status: 200}
+		next.ServeHTTP(sw, r)
+
+		log.Printf("[HTTP] %s %s %d %.2fs", r.Method, r.URL.Path, sw.status, time.Since(start).Seconds())
+	})
+}
+
+// statusWriter wraps http.ResponseWriter to capture the status code.
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (sw *statusWriter) WriteHeader(code int) {
+	sw.status = code
+	sw.ResponseWriter.WriteHeader(code)
 }
 
 func main() {
@@ -226,5 +256,5 @@ func main() {
 	registerSimulationRoutes(mux, simManager)
 
 	fmt.Println("Server running on http://localhost:8000")
-	log.Fatal(http.ListenAndServe(":8000", corsMiddleware(mux)))
+	log.Fatal(http.ListenAndServe(":8000", loggingMiddleware(corsMiddleware(mux))))
 }

@@ -2,17 +2,17 @@
 
 ## Who Is This For?
 
-This system is built for **commodity risk managers**, **procurement teams**, and **agricultural trading desks** — anyone responsible for monitoring price movements in agricultural commodities (corn, wheat, soybean oil) and protecting their positions from adverse market shifts.
+This system is built for **commodity risk managers**, **procurement teams**, and **agricultural trading desks** — anyone responsible for monitoring price movements in agricultural commodities (corn) and protecting their positions from adverse market shifts. It's a toy version of [Edge](https://try-edge.com).
 
 Typical users include:
 
 - **Risk managers** at food companies who need automated alerts when commodity prices approach stop-loss or take-profit thresholds
 - **Procurement officers** managing buy-side exposure who need early warning on price spikes
-- **Portfolio analysts** overseeing multi-commodity positions across a trading book
+- **Portfolio analysts** overseeing corn positions across a trading book
 
 ## What Does It Simulate?
 
-The platform simulates a **real-time commodity risk monitoring environment** backed by 2023-2024 USDA wholesale terminal market data. It models:
+The platform simulates a **real-time commodity risk monitoring environment** backed by 2023-2024 USDA wholesale terminal market data for corn. It models:
 
 - **Multi-tenant client isolation** — separate trading books per organization, enforced at the database level
 - **Long and short position tracking** — with live P&L calculations against current market prices
@@ -21,6 +21,48 @@ The platform simulates a **real-time commodity risk monitoring environment** bac
 - **An offline LLM evaluation framework** — a golden dataset of 10 scenarios (strict price-range checks and criteria-based qualitative checks) scored by a judge model, enabling prompt versioning and A/B testing before shipping changes
 
 The result is an end-to-end demonstration of how an AI copilot can augment human risk decisions in commodity markets — from position analysis, to alert creation, to triggered notifications.
+
+## Demo Walkthrough: What to Expect
+
+### Seeded Positions
+
+| User | Direction | Volume | Entry Price | Meaning |
+|------|-----------|--------|-------------|---------|
+| Alice (Acme) | Long | 50,000 crates | $33.00 | Profits when corn rises above $33 |
+| Alice (Acme) | Short | 20,000 crates | $38.00 | Profits when corn falls below $38 |
+| Bob (Acme) | Long | 30,000 crates | $34.00 | Profits when corn rises above $34 |
+| Carol (Global Grain) | Long | 100,000 crates | $32.00 | Profits when corn rises above $32 |
+
+### Seeded Alerts (Pre-loaded)
+
+| Alert | User | Condition | Threshold | Status | Purpose |
+|-------|------|-----------|-----------|--------|---------|
+| 1 | Alice | Below $28.00 | $28.00 | Active | Stop-loss protecting the long position |
+| 2 | Alice | Above $42.00 | $42.00 | Active | Take-profit on the short position |
+| 3 | Bob | Below $27.00 | $27.00 | Active | Watching for a corn dip |
+| 4 | Carol | Below $29.00 | $29.00 | Triggered | Already fired (demo of triggered state) |
+
+### 2024 Simulation: Predicted Alert Triggers
+
+When you start the simulation with `user_id=1` (Alice, Acme Foods), the system processes 2024 USDA corn data chronologically. Each alert fires **once** — the first date its condition is met — then flips to "triggered."
+
+**2024 corn price shape:**
+- **Jan-Feb**: Prices high ($33-$46)
+- **Mar onwards**: Prices collapse to $14-$28
+- **Late Dec (16-23)**: Brief spike back to $44-$46
+- **Dec 26-31**: Settles to $29-$39
+
+**Trigger timeline:**
+
+| Order | Date | Rep. Price | Alert Triggered | What Happens |
+|-------|------|-----------|-----------------|--------------|
+| 1 | **Jan 23, 2024** | ~$43.57 | Alert 2 (above $42) | Corn spikes above Alice's short take-profit — alert fires |
+| 2 | **Mar 11, 2024** | ~$27.69 | Alert 1 (below $28) | Corn drops below Alice's long stop-loss — alert fires |
+| 3 | **Mar 12, 2024** | ~$26.75 | Alert 3 (below $27) | Corn continues falling — Bob's dip alert fires next day |
+
+After March 12, all active alerts for Acme Foods are triggered. The simulation continues processing through December but no additional alerts fire.
+
+**Key takeaway for the demo:** The simulation shows realistic alert behavior — a short-position take-profit fires during a January price spike, then stop-losses cascade during the March price collapse. This is exactly how a risk monitoring system should work.
 
 ## How We Apply White Circle
 

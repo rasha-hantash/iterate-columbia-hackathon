@@ -93,12 +93,14 @@ func (h *AIHandler) HandleAnalyzePositions(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	log.Printf("[AI] Analyzing %d positions for user %d...", len(positions), userID)
 	analysis, err := h.callAnthropicAPI(positions, prices)
 	if err != nil {
 		log.Printf("AI analysis failed: %v", err)
 		respondError(w, http.StatusBadGateway, "AI analysis is currently unavailable")
 		return
 	}
+	log.Printf("[AI] Analysis complete: %d alert suggestions generated", len(analysis.Suggestions))
 
 	if h.whiteCircle != nil {
 		posJSON, _ := json.Marshal(positions)
@@ -231,12 +233,14 @@ func (h *AIHandler) HandleAnalyzeWithMarketData(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	log.Printf("[AI] Analyzing %d positions for user %d (with market data)...", len(positions), userID)
 	analysis, err := h.callAnthropicAPIWithMarketData(positions, prices, monthlySummaries)
 	if err != nil {
 		log.Printf("AI analysis with market data failed: %v", err)
 		respondError(w, http.StatusBadGateway, "AI analysis is currently unavailable")
 		return
 	}
+	log.Printf("[AI] Analysis complete: %d alert suggestions generated", len(analysis.Suggestions))
 
 	if h.whiteCircle != nil {
 		posJSON, _ := json.Marshal(positions)
